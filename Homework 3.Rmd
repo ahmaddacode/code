@@ -1,0 +1,152 @@
+---
+title: "Ahmed Homework 3"
+author: "Ahmed salem alhumaiqani- 119203007"
+date: "2022-12-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# IE 421 - Case Study - Financial Index Return
+
+```{r,message=FALSE}
+library(dplyr)
+library(lubridate)
+library(corrplot)
+library(PerformanceAnalytics)
+library(ggplot2)
+library(tidyr)
+library(dygraphs)
+library(knitr)
+library(forcats)
+```
+
+```{r}
+dFIR <- read.csv2("C:/Users/a7med/Downloads/dFIR.csv")
+  View(dFIR)
+```
+
+```{r}
+dFIR <- read.csv2("C:/Users/a7med/Downloads/dFIR.csv")
+```
+## Task 1. Visualizing Financial Index Returns
+
+### 1.1 Data Import
+
+```{r}
+head(dFIR) 
+dim(dFIR) 
+str(dFIR) 
+summary(dFIR) 
+```
+
+### 1.2 Converting Dates to Proper Format
+
+```{r}
+dFIR=dFIR %>%
+  mutate(date = dmy(date))
+str(dFIR)
+```
+
+### 1.3 Correlation Analysis
+
+```{r}
+cor(dFIR[,-1])
+```
+
+```{r}
+c=cor(dFIR[,-1])
+corrplot(c, method="circle",type="upper")
+```
+
+```{r,warning=FALSE}
+chart.Correlation(dFIR[,-1])
+```
+
+### 1.4 Time Series Plots
+
+```{r}
+ggplot(dFIR, aes(x = date, y = ISE)) + 
+  geom_line(color="steelblue") + labs(x="Date",y="Return",title="Istanbul Stock Exchange Daily Returns")
+```
+
+```{r}
+dG <- dFIR %>% 
+  select(date, ISE, SP) %>% 
+  gather(key = "index", value = "value", -date) 
+```
+
+```{r}
+ggplot(dG, aes(x = date, y = value)) + 
+  geom_line(aes(color = index), size = 0.3) + labs(x="Date",y="Return",title="Daily Returns for ISE and S&P 500")
+```
+
+```{r}
+
+dG <- dFIR %>%
+  select(date, ISE, SP, DAX) %>%
+  gather(key = "index", value = "value", -date)
+ggplot(dG, aes(x = date, y = value)) + 
+  geom_line(aes(color = index), size = 0.3) + labs(x="Date",y="Return",title="Daily Returns for ISE, S&P 500, DAX")
+```
+
+```{r}
+dG <- dFIR %>%
+  gather(key = "index", value = "value", -date)
+ggplot(dG, aes(x = date, y = value)) + 
+  geom_line(aes(color = index), size = 0.3,alpha=0.5) + labs(x="Date",y="Return",title="Daily Returns for All Six Indexes")
+```
+
+```{r}
+ggplot(dG, aes(x = date, y = value)) + 
+  geom_line(color="steelblue",size = 0.3) +
+  facet_wrap(~ index, nrow = 6)
+```
+
+```{r}
+d3=xts(x=dFIR[,-1],order.by=dFIR$date)
+dygraph(d3) %>%
+  dyRangeSelector(height = 20)
+```
+
+## Task 2. Volatility Analysis of Financial Index Returns
+
+### 2.1 Understanding Volatility
+Go back to the time series plot above, where you combine the ISE, SP and DAX returns on a single chart. Which index seems to have the highest volatility?
+
+### 2.2 Calculating Monthly Volatility for Each Index
+
+```{r}
+d.month.volatility <- dFIR %>%
+  group_by(month = cut(date, "month")) %>%
+  summarize(ISE=sd(ISE),SP=sd(SP),DAX=sd(DAX),FTSE=sd(FTSE),NIKKEI=sd(NIKKEI),BOVESPA=sd(BOVESPA))
+```
+
+```{r}
+head(d.month.volatility)
+```
+
+```{r}
+d.month.volatility <- d.month.volatility %>% mutate(month=ymd(month))
+```
+
+```{r}
+head(d.month.volatility)
+```
+
+### 2.3 Visualizing Monthly Volatility
+
+```{r}
+ggplot(d.month.volatility, aes(x = month, y = ISE)) + 
+  geom_line(color="steelblue", size = 1) + labs(x="Months",y="Standard Deviation",title="Monthly Volatility of Istanbul Stock Exchange Returns")
+```
+
+```{r}
+dm <- d.month.volatility %>%
+  gather(key = "index", value = "value", -month)
+
+ggplot(dm, aes(x = month, y = value)) + 
+  geom_line(aes(color = index), size = 0.5) + labs(x="Months",y="Standard Deviation",title="Monthly Volatility of All Six Index Returns")
+```
+
